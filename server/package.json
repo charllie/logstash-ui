@@ -1,0 +1,9 @@
+{
+  "name": "logstash-ui",
+  "version": "1.0.0",
+  "description": "A web interface to dockerize Logstash instances",
+  "author": "Charlie Huynh <charlie.telecom@gmail.com>",
+  "dependencies": {
+    "express": "^4.13.4"
+  }
+}
