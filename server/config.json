@@ -1,0 +1,10 @@
+{
+  "docker": {
+    "host": "",
+    "port": ""
+  },
+  "folders": {
+    "config": ".",
+    "data": "."
+  }
+}
