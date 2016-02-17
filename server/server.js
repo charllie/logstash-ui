@@ -13,11 +13,12 @@ app.get("/list", function(req, res) {
     fs.readdir("/config", function(err, files) {
         if (err)
             console.error(err);
-
-        res.json(files.filter(function(file) {
-            var suffix = ".conf";
-            return file.substr(-suffix.length) === suffix;
-        }));
+        else {
+            res.json(files.filter(function (file) {
+                var suffix = ".conf";
+                return file.substr(-suffix.length) === suffix;
+            }));
+        }
     });
 });
 
@@ -43,7 +44,6 @@ app.get("/status/:config", function(req, res) {
 
             response.on("end", function() {
                 var data = JSON.parse(content);
-
                 if (data.State && data.State.Status && data.State.Status === "running") {
                     res.json({status: "active"});
                 } else {
@@ -54,37 +54,72 @@ app.get("/status/:config", function(req, res) {
     }).end();
 });
 
-app.get("/active/:config", function(req, res) {
+app.get("/activate/:config", function(req, res) {
     var config = req.params.config;
 
-    var options = {
+    // Start the container
+    var optionsStart = {
         host: docker.host,
-        path: "/containers/create?name=logstash-" + config,
+        path: "/containers/logstash-" + config + "/start",
         port: docker.port,
-        method: "POST",
-        json: true,
-        body: JSON.stringify({
-            Image: "logstash:latest",
-            Mounts: [
-                {
-                    Source: folders.data,
-                    Destination: "/data"
-                },
-                {
-                    Source: folders.config,
-                    Destination: "/config"
-                }
-            ],
-            Cmd: ["logstash", "-f", "/config/" + config]
-        })
+        method: "POST"
     };
 
-    http.request(options, function(response) {
-        var statusCode = response.statusCode;
-        var content = "";
-        if (statusCode < 200 || statusCode > 299) {
+    http.request(optionsStart, function(response) {
+        var statusCodeStart = response.statusCode;
+        if (statusCodeStart == 404) {
+            console.log("No such container: " + config);
+            console.log("Creating now...");
+
+            var data = JSON.stringify({
+                Image: "logstash:latest",
+                HostConfig: {
+                    Binds: [folders.data + ":/data", folders.config + ":/config"]
+                },
+                Cmd: ["logstash", "-w", "1", "-f", "/config/" + config]
+            });
+
+            // Create the container
+            var options = {
+                host: docker.host,
+                path: "/containers/create?name=logstash-" + config,
+                port: docker.port,
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': data.length
+                }
+            };
+
+            var request = http.request(options, function(r) {
+                var statusCode = r.statusCode;
+
+                if (statusCode < 200 || statusCode > 299) {
+                    console.log("Cannot create the container: " + config);
+                    res.json({status: "bugged"});
+                } else {
+                    console.log("Container successfully created: " + config);
+
+                    http.request(optionsStart, function(rr) {
+                        if (rr.statusCode == 204 || rr.statusCode == 304) {
+                            console.log("Starting the config: " + config);
+                            res.json({status: "active"});
+                        } else {
+                            console.log("Cannot start the config: " + config);
+                            res.json({status: "bugged"});
+                        }
+                    }).end();
+                }
+            });
+
+            request.write(data);
+            request.end();
+
+        } else if (statusCodeStart == 204 || statusCodeStart == 304) {
+            console.log("Starting the config: " + config);
             res.json({status: "active"});
         } else {
+            console.log("Cannot start the config: " + config);
             res.json({status: "bugged"});
         }
     }).end();
@@ -102,10 +137,11 @@ app.get("/disable/:config", function(req, res) {
 
     http.request(options, function(response) {
         var statusCode = response.statusCode;
-        var content = "";
         if (statusCode < 300) {
+            console.log("Config successfully disabled:" + config);
             res.json({status: "available"});
         } else {
+            console.log("Cannot disable the config:" + config);
             res.json({status: "bugged"});
         }
     }).end();
@@ -120,8 +156,8 @@ app.get("/read/:config", function(req, res) {
     fs.readFile("/config/" + config, "utf-8", function(err, data) {
         if (err)
             console.error(err);
-
-        res.send(data);
+        else
+            res.send(data);
     })
 });
 
