@@ -1,82 +1,85 @@
 <!doctype html>
 <html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=1">
-        <link rel="stylesheet" type="text/css" href="css/semantic.min.css">
-        <link rel="stylesheet" type="text/css" href="css/stylesheet.css">
-        <title>Logstash UI</title>
-    </head>
-    <body ng-app="app">
-        <div class="ui fixed inverted menu">
-            <div class="ui container">
-                <a class="header item" alt="Logstash UI">
-                    <i class="settings icon"></i>
-                    Logstash UI
-                </a>
-                <a class="item" href="/" alt="Home">Home</a>
-            </div>
-        </div>
-        <div class="main">
-            <div class="ui container">
-                <div class="ui three column divided stackable grid">
-                    <div class="row" ng-controller="ConfigurationsCtrl">
-                        <!-- Available -->
-                        <div class="column">
-                            <h4 class="text centered">Available configurations</h4>
-                            <div class="ui middle aligned divided list">
-                                <div class="item" ng-repeat="configuration in getList() | filter: neitherActiveNorBugged">
-                                    <div class="right floated content">
-                                        <button class="ui circular basic mini icon button" ng-click="open(configuration)">
-                                            <i class="icon file"></i>
-                                        </button>
-                                        <button class="ui circular {{ configuration.class }} mini icon button" ng-click="activate(configuration)">
-                                            <i class="icon {{ configuration.icon }}"></i>
-                                        </button>
-                                    </div>
-                                    <div class="content">{{ configuration.name }}</div>
-                                </div>
-                            </div>
-                        </div>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=1">
+	<link rel="stylesheet" type="text/css" href="css/semantic.min.css">
+	<link rel="stylesheet" type="text/css" href="css/stylesheet.css">
+	<title>Logstash UI</title>
+</head>
+<body ng-app="app">
+<div class="ui fixed inverted menu">
+	<div class="ui container">
+		<a class="header item" alt="Logstash UI">
+			<i class="settings icon"></i>
+			Logstash UI
+		</a>
+		<a class="item" href="/" alt="Home">Home</a>
+	</div>
+</div>
+<div class="main">
+	<div class="ui container">
+		<div class="ui three column divided stackable grid">
+			<div class="row" ng-controller="ConfigurationsCtrl">
+				<!-- Available -->
+				<div class="column">
+					<h4 class="text centered">Available configurations</h4>
+					<div class="ui middle aligned divided list">
+						<div class="item" ng-repeat="configuration in getList() | filter: neitherActiveNorBugged">
+							<div class="right floated content">
+								<button class="ui circular basic mini icon button" ng-click="open(configuration)">
+									<i class="icon file"></i>
+								</button>
+								<button class="ui circular {{ configuration.class }} mini icon button"
+								        ng-click="activate(configuration)">
+									<i class="icon {{ configuration.icon }}"></i>
+								</button>
+							</div>
+							<div class="content">{{ configuration.name }}</div>
+						</div>
+					</div>
+				</div>
 
-                        <!-- Active -->
-                        <div class="column">
-                            <h4 class="text centered">Active configurations</h4>
-                            <div class="ui middle aligned divided list">
-                                <div class="item" ng-repeat="configuration in getList() | filter: {status: 'active'}">
-                                    <div class="right floated content">
-                                        <button class="ui circular {{ configuration.class }} mini icon button" ng-click="disable(configuration)">
-                                            <i class="icon {{ configuration.icon }}"></i>
-                                        </button>
-                                    </div>
-                                    <div class="content">{{ configuration.name }}</div>
-                                </div>
-                            </div>
-                        </div>
+				<!-- Active -->
+				<div class="column">
+					<h4 class="text centered">Active configurations</h4>
+					<div class="ui middle aligned divided list">
+						<div class="item" ng-repeat="configuration in getList() | filter: {status: 'active'}">
+							<div class="right floated content">
+								<button class="ui circular {{ configuration.class }} mini icon button"
+								        ng-click="disable(configuration)">
+									<i class="icon {{ configuration.icon }}"></i>
+								</button>
+							</div>
+							<div class="content">{{ configuration.name }}</div>
+						</div>
+					</div>
+				</div>
 
-                        <!-- Bugged -->
-                        <div class="column">
-                            <h4 class="text centered">Bugged configurations</h4>
-                            <div class="ui middle aligned divided list">
-                                <div class="item" ng-repeat="configuration in getList() | filter: {status: 'bugged'}">
-                                    <div class="right floated content">
-                                        <button class="ui circular {{ configuration.class }} mini icon button" ng-click="reload(configuration)">
-                                            <i class="icon {{ configuration.icon }}"></i>
-                                        </button>
-                                    </div>
-                                    <div class="content">{{ configuration.name }}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <script src="lib/angular.min.js" type="application/javascript"></script>
-        <script src="lib/lodash.min.js" type="application/javascript"></script>
-        <script src="js/globals.js" type="application/javascript"></script>
-        <script src="js/controllers/configurations.js" type="application/javascript"></script>
-        <script src="js/controllers/containers.js" type="application/javascript"></script>
-        <script src="js/app.js" type="application/javascript"></script>
-    </body>
+				<!-- Bugged -->
+				<div class="column">
+					<h4 class="text centered">Bugged configurations</h4>
+					<div class="ui middle aligned divided list">
+						<div class="item" ng-repeat="configuration in getList() | filter: {status: 'bugged'}">
+							<div class="right floated content">
+								<button class="ui circular {{ configuration.class }} mini icon button"
+								        ng-click="reload(configuration)">
+									<i class="icon {{ configuration.icon }}"></i>
+								</button>
+							</div>
+							<div class="content">{{ configuration.name }}</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="lib/angular.min.js" type="application/javascript"></script>
+<script src="lib/lodash.min.js" type="application/javascript"></script>
+<script src="js/globals.js" type="application/javascript"></script>
+<script src="js/controllers/configurations.js" type="application/javascript"></script>
+<script src="js/controllers/containers.js" type="application/javascript"></script>
+<script src="js/app.js" type="application/javascript"></script>
+</body>
 </html>

@@ -1,5 +1,5 @@
 function updateScope(scope) {
-    _.defer(function() {
-        scope.$apply();
-    });
+	_.defer(function () {
+		scope.$apply();
+	});
 }

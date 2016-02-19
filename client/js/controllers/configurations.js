@@ -1,141 +1,147 @@
 function Configurations($scope, $http) {
 
-    var list = [];
-    var status = {
-        unknown: 'unknown',
-        available: 'available',
-        active: 'active',
-        bugged: 'bugged'
-    };
+	var list = [];
+	var status = {
+		unknown: 'unknown',
+		available: 'available',
+		active: 'active',
+		bugged: 'bugged'
+	};
 
-    function loadList() {
+	function loadList() {
 
-        $http.get('/list').then(function(success) {
+		$http.get('/list').then(function (success) {
 
-            var data = success.data;
+			var data = success.data;
 
-            list = [];
-            for(var i in data) {
-                var obj = {
-                    name: data[i],
-                    class: 'basic loading',
-                    icon: '',
-                    status: status.unknown
-                };
+			list = [];
+			for (var i in data) {
+				var name = data[i];
+				var obj = {
+					name: data[i],
+					class: 'basic loading',
+					icon: '',
+					status: status.unknown
+				};
 
-                list.push(obj);
+				list.push(obj);
 
-                $http.get('/status/' + data[i]).then(function(success) {
-                    var successStatus = success.data.status;
+				getStatus(obj);
+			}
 
-                    switch (successStatus) {
-                        case status.available:
-                            available(obj);
-                            break;
+			updateScope($scope);
+		}, function (error) {
+			// TODO
+		});
+	}
 
-                        case status.active:
-                            active(obj);
-                            break;
+	loadList();
 
-                        default:
-                            bugged(obj);
-                            break;
-                    }
+	$scope.getList = function () {
+		return list;
+	};
 
-                }, function(error) {
-                    bugged(obj);
-                });
-            }
+	$scope.activate = function (configuration) {
+		if (configuration.status && configuration.status === status.available) {
+			pending(configuration);
+			$http.get('/activate/' + configuration.name).then(function (success) {
 
-            updateScope($scope);
-        }, function(error) {
-            // TODO
-        });
-    }
+				if (success.data.status && success.data.status === status.active)
+					active(configuration);
+				else
+					bugged(configuration);
+			}, function (error) {
+				bugged(configuration);
+			});
+		}
+	};
 
-    loadList();
+	$scope.open = function (configuration) {
+		$http.get('/read/' + configuration.name).then(function (data) {
+			console.log(data);
+		}, function (data) {
+			// TODO
+		});
+	};
 
-    $scope.getList = function() {
-        return list;
-    };
+	$scope.disable = function (configuration) {
+		if (configuration.status && configuration.status === status.active) {
+			pending(configuration);
+			$http.get('/disable/' + configuration.name).then(function (success) {
+				if (success.data.status && success.data.status === status.available)
+					available(configuration);
+				else
+					bugged(configuration);
+			}, function (error) {
+				bugged(configuration);
+			});
+		}
+	};
 
-    $scope.activate = function(configuration) {
-        if (configuration.status && configuration.status === status.available) {
-            pending(configuration);
-            $http.get('/activate/' + configuration.name).then(function(success) {
+	$scope.reload = function (configuration) {
+		if (configuration.status && configuration.status === status.bugged) {
+			pending(configuration);
+			$http.get('/activate/' + configuration.name).then(function (success) {
+				active(configuration);
+			}, function (error) {
+				bugged(configuration);
+			});
+		}
+	};
 
-                if (success.data.status && success.data.status === status.active)
-                    active(configuration);
-                else
-                    bugged(configuration);
-            }, function(error) {
-                bugged(configuration);
-            });
-        }
-    };
+	$scope.neitherActiveNorBugged = function (configuration) {
+		return !(configuration.status === status.active || configuration.status === status.bugged);
+	};
 
-    $scope.open = function(configuration) {
-        $http.get('/read/' + configuration.name).then(function(data) {
-            console.log(data);
-        }, function(data) {
-            // TODO
-        });
-    };
+	function getStatus(configuration) {
+		$http.get('/status/' + configuration.name).then(function (success) {
 
-    $scope.disable = function(configuration) {
-        if (configuration.status && configuration.status === status.active) {
-            pending(configuration);
-            $http.get('/disable/' + configuration.name).then(function(success) {
-                if (success.data.status && success.data.status === status.available)
-                    available(configuration);
-                else
-                    bugged(configuration);
-            }, function(error) {
-                bugged(configuration);
-            });
-        }
-    };
+			var successStatus = success.data.status;
 
-    $scope.reload = function(configuration) {
-        if (configuration.status && configuration.status === status.bugged) {
-            pending(configuration);
-            $http.get('/activate/' + configuration.name).then(function(success) {
-                active(configuration);
-            }, function(error) {
-                bugged(configuration);
-            });
-        }
-    };
+			switch (successStatus) {
+				case status.available:
+					available(configuration);
+					break;
 
-    $scope.neitherActiveNorBugged = function(configuration) {
-        return !(configuration.status === status.active || configuration.status === status.bugged);
-    };
+				case status.active:
+					active(configuration);
+					break;
 
-    function available(configuration) {
-        configuration.class = 'green';
-        configuration.icon = 'plus';
-        configuration.status = status.available;
-        updateScope($scope);
-    }
+				default:
+					bugged(configuration);
+					break;
+			}
 
-    function active(configuration) {
-        configuration.class = 'yellow';
-        configuration.icon = 'minus';
-        configuration.status = status.active;
-        updateScope($scope);
-    }
+		}, function (error) {
+			bugged(configuration);
+		});
+	}
 
-    function bugged(configuration) {
-        configuration.class = 'orange';
-        configuration.icon = 'warning';
-        configuration.status = status.bugged;
-        updateScope($scope);
-    }
+	function available(configuration) {
+		configuration.class = 'green';
+		configuration.icon = 'plus';
+		configuration.status = status.available;
+		updateScope($scope);
+	}
 
-    function pending(configuration) {
-        configuration.class = 'basic loading';
-        configuration.icon = '';
-        updateScope($scope);
-    }
+	function active(configuration) {
+		configuration.class = 'yellow';
+		configuration.icon = 'minus';
+		configuration.status = status.active;
+		updateScope($scope);
+	}
+
+	function bugged(configuration) {
+		configuration.class = 'orange';
+		configuration.icon = 'warning';
+		configuration.status = status.bugged;
+		updateScope($scope);
+	}
+
+	function pending(configuration) {
+		configuration.class = 'basic loading';
+		configuration.icon = '';
+		updateScope($scope);
+	}
 
 }
