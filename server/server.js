@@ -7,6 +7,10 @@ var app = express();
 var docker = config.docker;
 var folders = config.folders;
 
+function wait(config) {
+
+}
+
 function disable(config, success, error) {
 	var options = {
 		host: docker.host,
