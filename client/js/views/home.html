@@ -1,0 +1,50 @@
+<div class="ui three column divided stackable grid">
+	<div class="row">
+		<!-- Available -->
+		<div class="column">
+			<h4 class="text centered">Available configurations</h4>
+			<div class="ui middle aligned divided list">
+				<div class="item" ng-repeat="configuration in getList() | filter: neitherActiveNorBugged">
+					<div class="right floated content">
+						<button class="ui circular {{ configuration.class }} mini icon button" ng-click="activate(configuration)">
+							<i class="icon {{ configuration.icon }}"></i>
+						</button>
+					</div>
+					<div class="content">{{ configuration.name }}</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Active -->
+		<div class="column">
+			<h4 class="text centered">Active configurations</h4>
+			<div class="ui middle aligned divided list">
+				<div class="item" ng-repeat="configuration in getList() | filter: {status: 'active'}">
+					<div class="right floated content">
+						<button class="ui circular {{ configuration.class }} mini icon button"
+						        ng-click="disable(configuration)">
+							<i class="icon {{ configuration.icon }}"></i>
+						</button>
+					</div>
+					<div class="content">{{ configuration.name }}</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Bugged -->
+		<div class="column">
+			<h4 class="text centered">Bugged configurations</h4>
+			<div class="ui middle aligned divided list">
+				<div class="item" ng-repeat="configuration in getList() | filter: {status: 'bugged'}">
+					<div class="right floated content">
+						<button class="ui circular {{ configuration.class }} mini icon button"
+						        ng-click="reload(configuration)">
+							<i class="icon {{ configuration.icon }}"></i>
+						</button>
+					</div>
+					<div class="content">{{ configuration.name }}</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

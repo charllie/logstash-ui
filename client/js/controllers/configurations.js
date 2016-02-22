@@ -10,7 +10,7 @@ function Configurations($scope, $http) {
 
 	function loadList() {
 
-		$http.get('/list').then(function (success) {
+		$http.get('/configs').then(function (success) {
 
 			var data = success.data;
 
@@ -44,7 +44,7 @@ function Configurations($scope, $http) {
 	$scope.activate = function (configuration) {
 		if (configuration.status && configuration.status === status.available) {
 			pending(configuration);
-			$http.get('/activate/' + configuration.name).then(function (success) {
+			$http.post('/configs/' + configuration.name).then(function (success) {
 
 				if (success.data.status && success.data.status === status.active)
 					active(configuration);
@@ -56,18 +56,10 @@ function Configurations($scope, $http) {
 		}
 	};
 
-	$scope.open = function (configuration) {
-		$http.get('/read/' + configuration.name).then(function (data) {
-			console.log(data);
-		}, function (data) {
-			// TODO
-		});
-	};
-
 	$scope.disable = function (configuration) {
 		if (configuration.status && configuration.status === status.active) {
 			pending(configuration);
-			$http.get('/disable/' + configuration.name).then(function (success) {
+			$http.delete('/configs/' + configuration.name).then(function (success) {
 				if (success.data.status && success.data.status === status.available)
 					available(configuration);
 				else
@@ -81,7 +73,7 @@ function Configurations($scope, $http) {
 	$scope.reload = function (configuration) {
 		if (configuration.status && configuration.status === status.bugged) {
 			pending(configuration);
-			$http.get('/activate/' + configuration.name).then(function (success) {
+			$http.post('/configs/' + configuration.name).then(function (success) {
 				active(configuration);
 			}, function (error) {
 				bugged(configuration);
@@ -94,7 +86,7 @@ function Configurations($scope, $http) {
 	};
 
 	function getStatus(configuration) {
-		$http.get('/status/' + configuration.name).then(function (success) {
+		$http.get('/configs/' + configuration.name + '/status').then(function (success) {
 
 			var successStatus = success.data.status;
 

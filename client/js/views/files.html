@@ -1,0 +1,40 @@
+<div class="upload-zone">AAA</div>
+
+<div class="ui active dimmer inverted" ng-show="isPending()">
+	<div class="ui text loader">Loading...</div>
+</div>
+
+<table class="ui files table">
+	<thead>
+		<tr>
+			<th>{{ pwd() }}</th>
+			<th class="right aligned collapsing">
+				<button class="ui basic icon button" ng-hide="isParent()" ng-click="back()">
+					<i class="level up icon"></i>
+				</button>
+			</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr ng-repeat="folder in getFolders() | orderBy:'toString()'">
+			<td ng-click="open(folder)">
+				<i class="folder icon"></i> {{ folder }}
+			</td>
+			<td class="right aligned collapsing">
+			</td>
+		</tr>
+		<tr ng-repeat="file in getFiles() | orderBy:'toString()'">
+			<td>
+				<i class="file outline icon"></i> {{ file }}
+			</td>
+			<td class="right aligned collapsing">
+				<button class="ui compact basic tiny yellow icon button">
+					<i class="download icon"></i>
+				</button>
+				<div class="ui compact basic tiny orange icon button">
+					<i class="trash icon"></i>
+				</div>
+			</td>
+		</tr>
+	</tbody>
+</table>

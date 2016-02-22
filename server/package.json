@@ -4,6 +4,7 @@
   "description": "A web interface to dockerize Logstash instances",
   "author": "Charlie Huynh <charlie.telecom@gmail.com>",
   "dependencies": {
-    "express": "^4.13.4"
+    "express": "^4.13.4",
+    "multer": "^1.1.0"
   }
 }
