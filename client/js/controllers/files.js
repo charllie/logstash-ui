@@ -9,13 +9,12 @@ function Files($scope, $http, $route) {
 		if (!pending) {
 			pending = true;
 			updateScope($scope);
-			$http.get('/ls' + parent, folder).then(function (response) {
+			$http.get('/volumes' + parent, folder).then(function (response) {
 				if (success) {
 					success(response);
-				} else {
-					updateListing(response);
 				}
 				pending = false;
+				updateListing(response);
 			}, function () {
 				files = [];
 				folders = [];
@@ -70,7 +69,6 @@ function Files($scope, $http, $route) {
 			}
 		}, function(response) {
 			subfolders.push(f);
-			updateListing(response);
 		});
 	};
 
@@ -86,7 +84,6 @@ function Files($scope, $http, $route) {
 				}
 			}, function(response) {
 				subfolders.pop();
-				updateListing(response);
 			});
 		}
 	};
@@ -105,6 +102,4 @@ function Files($scope, $http, $route) {
 	function showError() {
 		// TODO
 	}
-
-	var myDropzone = new Dropzone(".upload-zone", { url: "/upload"});
 }

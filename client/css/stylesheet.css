@@ -1,3 +1,7 @@
+body {
+	background: #f9f9f9;
+}
+
 .main {
 	padding-top: 7em;
 }
@@ -16,4 +20,49 @@
 
 .files.table {
 	margin-bottom: 4em !important;
+}
+
+.logs {
+	padding-top: 2em;
+}
+
+.logs-header {
+	font-weight: bold;
+	font-size: 1.071rem;
+}
+
+#logs {
+	font-family: 'Source Code Pro', monospace;
+}
+
+.content.configuration {
+	line-height: 2em !important;
+}
+
+.ui.inverted.segment {
+	background-color: #555 !important;
+}
+
+.ng-enter, .ng-leave, .ng-move, .ng-hide-add, .ng-hide-remove {
+	-webkit-transition: all linear 1s;
+	-moz-transition: all linear 1s;
+	-o-transition: all linear 1s;
+	transition: all linear 1s;
+	display: block!important;
+}
+
+.ng-hide-add.ng-hide-add-active, .ng-enter, .ng-hide-remove, .ng-leave.ng-leave-active {
+	opacity: 0;
+}
+
+.ng-move {
+	opacity: 0.5;
+}
+
+.ng-move.ng-move-active {
+	opacity: 1;
+}
+
+.ng-hide-add, .ng-hide-remove.ng-hide-remove-active, .ng-enter.ng-enter-active, .ng-leave {
+	opacity: 1;
 }

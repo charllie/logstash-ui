@@ -1,53 +1,42 @@
+// External Librairies
+var express = require('express');
+var multer = require('multer');
+var http = require('http');
+var Docker = require('dockerode');
+
+// Local librairies
+var fm = require('./file-manager.js');
+
+// Configurations
 var config = require('./config.json');
 
-var express = require('express');
+// Initializations
 var app = express();
-
-var multer = require('multer');
 var upload = multer({ dest: '/data' });
-var fm = require('./file-manager.js');
-var http = require('http');
-
-var docker = config.docker;
+var docker = new Docker(config.docker);
 var folders = config.folders;
 
-function wait(config) {
-	// TODO
-}
-
-function disable(config, success, error) {
-	var options = {
-		host: docker.host,
-		path: '/containers/logstash-' + config + '?force=true',
-		port: docker.port,
-		method: 'DELETE'
-	};
-
-	http.request(options, function(response) {
-		var statusCode = response.statusCode;
-		if (statusCode < 300) {
-			console.log('Config successfully disabled: ' + config);
-			if (success)
-				success();
-		} else {
-			console.log('Cannot disable the config: ' + config);
-			if (error)
-				error();
-		}
-	}).end();
-}
-
-function getList(success, error) {
-	fm.ls('/config', function(files) {
-		success(files.filter(function (file) {
-			var suffix = '.conf';
-			return file.substr(-suffix.length) === suffix;
-		}));
-	}, error);
-}
-
-
 app.use(express.static('../client/'));
+
+// Docker manipulations
+function disable(config, success, error) {
+
+	var container = docker.getContainer('logstash-' + config);
+
+	if (container) {
+		container.remove({
+			force: true
+		}, function (err, data) {
+			if (err) {
+				if (error)
+					error();
+			} else {
+				if (success)
+					success();
+			}
+		});
+	}
+}
 
 app.get('/configs', function(req, res) {
 
@@ -61,105 +50,102 @@ app.get('/configs', function(req, res) {
 
 app.get('/configs/:config/status', function(req, res) {
 	var config = req.params.config;
-
-	var options = {
-		host: docker.host,
-		path: '/containers/logstash-' + config + '/json',
-		port: docker.port,
-		method: 'GET'
-	};
-
-	http.request(options, function(response) {
-		var statusCode = response.statusCode;
-		var content = "";
-		if (statusCode < 200 || statusCode > 299) {
+	var container = docker.getContainer('logstash-' + config);
+	container.inspect(function(err, data) {
+		if (err)
 			res.json({status: 'available'});
+		else {
+			if (data.State && data.State.Status && data.State.Status === 'running') {
+				res.json({status: 'active'});
+			} else {
+				res.json({status: 'bugged'});
+			}
+		}
+	});
+});
+
+app.get('/configs/:config/logs', function(req, res) {
+	var config = req.params.config;
+	var tail = req.query.tail;
+
+	if (parseInt(tail)) {
+		tail = parseInt(tail);
+	} else if (tail != 'all') {
+		tail = 100;
+	}
+
+	var timestamps = (req.query.timestamps) ? true : false;
+	var container = docker.getContainer('logstash-' + config);
+	container.logs({
+		stdout: true,
+		stderr: true,
+		timestamps: timestamps,
+		tail: tail
+	}, function(err, message) {
+		if (err) {
+			//res.statusCode(err.statusCode).end();
 		} else {
-			response.on('data', function (chunk) {
-				content += chunk;
+			var data = '';
+			message.on('data', function(chunk) {
+				data += chunk.toString();
 			});
 
-			response.on('end', function () {
-				var data = JSON.parse(content);
-				if (data.State && data.State.Status && data.State.Status === 'running') {
-					res.json({status: 'active'});
-				} else {
-					res.json({status: 'bugged'});
-				}
-			});
+			message.on('end', function() {
+				res.json({
+					data: data
+						.replace(new RegExp('\r?\n','g'), '<br>')
+						.replace(/[^A-Za-z 0-9 \.,\?""!@#\$%\^&\*\(\)-_=\+;:<>\/\\\|\}\{\[\]`~]*/g, '')
+				});
+			})
 		}
-	}).end();
+	});
 });
 
 app.post('/configs/:config', function(req, res) {
 	var config = req.params.config;
+	var container = docker.getContainer('logstash-' + config);
+	container.start(function(err, data) {
+		if (err) {
+			var statusCode = err.statusCode;
 
-	// Start the container
-	var optionsStart = {
-		host: docker.host,
-		path: '/containers/logstash-' + config + '/start',
-		port: docker.port,
-		method: 'POST'
-	};
+			if (statusCode == 404) {
+				console.log('No such container: ' + config);
+				console.log('Creating now...');
 
-	http.request(optionsStart, function(response) {
-		var statusCodeStart = response.statusCode;
-		if (statusCodeStart == 404) {
-			console.log('No such container: ' + config);
-			console.log('Creating now...');
+				docker.createContainer({
+					Image: 'charllie/logstash:latest',
+					HostConfig: {
+						Binds: [folders.data + ':/data', folders.config + ':/config']
+					},
+					Cmd: ['-f', '/config/' + config],
+					name: 'logstash-' + config
+				}, function(err, c) {
+					if (err) {
+						console.log('Cannot create the container: ' + config);
+						res.json({status: 'bugged'});
+					} else {
+						c.start(function(err, data) {
+							if (err) {
+								console.log('Cannot start the config: ' + config);
+								res.json({status: 'bugged'});
+							} else {
+								console.log('Starting the config: ' + config);
+								res.json({status: 'active'});
+							}
+						});
+					}
+				});
 
-			var data = JSON.stringify({
-				Image: 'logstash:latest',
-				HostConfig: {
-					Binds: [folders.data + ':/data', folders.config + ':/config']
-				},
-				Cmd: ['logstash', '-w', '1', '-f', '/config/' + config]
-			});
+			} else {
+				console.log('Cannot start the config: ' + config);
+				res.json({status: 'bugged'});
+			}
 
-			// Create the container
-			var options = {
-				host: docker.host,
-				path: '/containers/create?name=logstash-' + config,
-				port: docker.port,
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'Content-Length': data.length
-				}
-			};
-
-			var request = http.request(options, function (r) {
-				var statusCode = r.statusCode;
-
-				if (statusCode < 200 || statusCode > 299) {
-					console.log('Cannot create the container: ' + config);
-					res.json({status: 'bugged'});
-				} else {
-					console.log('Container successfully created: ' + config);
-
-					http.request(optionsStart, function (rr) {
-						if (rr.statusCode == 204 || rr.statusCode == 304) {
-							console.log('Starting the config: ' + config);
-							res.json({status: 'active'});
-						} else {
-							console.log('Cannot start the config: ' + config);
-							res.json({status: 'bugged'});
-						}
-					}).end();
-				}
-			});
-
-			request.write(data);
-			request.end();
-
-		} else if (statusCodeStart == 204 || statusCodeStart == 304) {
+		} else {
 			console.log('Starting the config: ' + config);
 			res.json({status: 'active'});
-		} else {
-			console.log('Cannot start the config: ' + config);
-			res.json({status: 'bugged'});
 		}
-	}).end();
+	});
 });
 
 app.delete('/configs/:config', function(req, res) {
@@ -172,13 +158,15 @@ app.delete('/configs/:config', function(req, res) {
 	});
 });
 
-app.get('/ls/data', function(req, res) {
-	ls('/data', req, res);
-});
-
-app.get('/ls/config', function(req, res) {
-	ls('/config', req, res);
-});
+// Volume manipulations
+function getList(success, error) {
+	fm.ls('/config', function(files) {
+		success(files.filter(function (file) {
+			var suffix = '.conf';
+			return file.substr(-suffix.length) === suffix;
+		}));
+	}, error);
+}
 
 function ls(configOrData, req, res) {
 	var subfolders = (req.query.subfolders) ? req.query.subfolders : '';
@@ -206,10 +194,19 @@ function ls(configOrData, req, res) {
 	}
 }
 
+app.get('/volumes/data', function(req, res) {
+	ls('/data', req, res);
+});
+
+app.get('/volumes/config', function(req, res) {
+	ls('/config', req, res);
+});
+
 app.post('/upload', upload.single('file'), function(req, res, next) {
 	return res.status(200).end();
 });
 
+// To conclude
 app.listen(3000);
 
 process.on('SIGTERM', function () {

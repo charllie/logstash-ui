@@ -6,11 +6,11 @@
 			<div class="ui middle aligned divided list">
 				<div class="item" ng-repeat="configuration in getList() | filter: neitherActiveNorBugged">
 					<div class="right floated content">
-						<button class="ui circular {{ configuration.class }} mini icon button" ng-click="activate(configuration)">
+						<button class="ui basic {{ configuration.class }} mini icon button" ng-click="activate(configuration)">
 							<i class="icon {{ configuration.icon }}"></i>
 						</button>
 					</div>
-					<div class="content">{{ configuration.name }}</div>
+					<div class="content configuration">{{ configuration.name }}</div>
 				</div>
 			</div>
 		</div>
@@ -21,12 +21,15 @@
 			<div class="ui middle aligned divided list">
 				<div class="item" ng-repeat="configuration in getList() | filter: {status: 'active'}">
 					<div class="right floated content">
-						<button class="ui circular {{ configuration.class }} mini icon button"
+						<button class="ui basic yellow mini icon button" ng-click="getLogs(configuration)">
+							<i class="icon file text"></i>
+						</button>
+						<button class="ui basic {{ configuration.class }} mini icon button"
 						        ng-click="disable(configuration)">
 							<i class="icon {{ configuration.icon }}"></i>
 						</button>
 					</div>
-					<div class="content">{{ configuration.name }}</div>
+					<div class="content configuration">{{ configuration.name }}</div>
 				</div>
 			</div>
 		</div>
@@ -37,14 +40,25 @@
 			<div class="ui middle aligned divided list">
 				<div class="item" ng-repeat="configuration in getList() | filter: {status: 'bugged'}">
 					<div class="right floated content">
-						<button class="ui circular {{ configuration.class }} mini icon button"
+						<button class="ui basic yellow mini icon button" ng-click="getLogs(configuration)">
+							<i class="icon file text"></i>
+						</button>
+						<button class="ui basic {{ configuration.class }} mini icon button"
 						        ng-click="reload(configuration)">
 							<i class="icon {{ configuration.icon }}"></i>
 						</button>
 					</div>
-					<div class="content">{{ configuration.name }}</div>
+					<div class="content configuration">{{ configuration.name }}</div>
 				</div>
 			</div>
 		</div>
 	</div>
+</div>
+
+<div ng-show="areLogsPrinted()" class="logs">
+	<button class="ui right floated icon button" ng-click="closeLogs()">
+		<i class="icon remove"></i>
+	</button>
+	<div class="ui logs-header left floated">Logs ({{ getLogsConfiguration() }})</div>
+	<div class="ui inverted segment" id="logs"></div>
 </div>

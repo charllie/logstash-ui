@@ -7,10 +7,14 @@ function Configurations($scope, $http) {
 		active: 'active',
 		bugged: 'bugged'
 	};
+	var logs = {
+		printed: false,
+		configuration: null
+	};
 
 	function loadList() {
 
-		$http.get('/configs').then(function (success) {
+		$http.get('/configs').then(function(success) {
 
 			var data = success.data;
 
@@ -30,67 +34,88 @@ function Configurations($scope, $http) {
 			}
 
 			updateScope($scope);
-		}, function (error) {
+		}, function(error) {
 			// TODO
 		});
 	}
 
 	loadList();
 
-	$scope.getList = function () {
+	$scope.getList = function() {
 		return list;
 	};
 
-	$scope.activate = function (configuration) {
+	$scope.activate = function(configuration) {
 		if (configuration.status && configuration.status === status.available) {
 			pending(configuration);
-			$http.post('/configs/' + configuration.name).then(function (success) {
+			$http.post('/configs/' + configuration.name).then(function(success) {
 
 				if (success.data.status && success.data.status === status.active)
 					active(configuration);
 				else
 					bugged(configuration);
-			}, function (error) {
+			}, function(error) {
 				bugged(configuration);
 			});
 		}
 	};
 
-	$scope.disable = function (configuration) {
+	$scope.disable = function(configuration) {
 		if (configuration.status && configuration.status === status.active) {
 			pending(configuration);
-			$http.delete('/configs/' + configuration.name).then(function (success) {
+			$http.delete('/configs/' + configuration.name).then(function(success) {
 				if (success.data.status && success.data.status === status.available)
 					available(configuration);
 				else
 					bugged(configuration);
-			}, function (error) {
+			}, function(error) {
 				bugged(configuration);
 			});
 		}
 	};
 
-	$scope.reload = function (configuration) {
+	$scope.reload = function(configuration) {
 		if (configuration.status && configuration.status === status.bugged) {
 			pending(configuration);
-			$http.post('/configs/' + configuration.name).then(function (success) {
+			$http.post('/configs/' + configuration.name).then(function(success) {
 				active(configuration);
-			}, function (error) {
+			}, function(error) {
 				bugged(configuration);
 			});
 		}
 	};
 
-	$scope.neitherActiveNorBugged = function (configuration) {
+	$scope.closeLogs = closeLogs;
+
+	$scope.neitherActiveNorBugged = function(configuration) {
 		return !(configuration.status === status.active || configuration.status === status.bugged);
 	};
 
+	$scope.getLogs = function(configuration) {
+		$http.get('/configs/' + configuration.name + '/logs').then(function(success) {
+			logs.printed = true;
+			logs.configuration = configuration.name;
+			updateScope($scope);
+			document.getElementById("logs").innerHTML = success.data.data;
+		}, function(error) {
+			// TODO
+		});
+	};
+
+	$scope.areLogsPrinted = function() {
+		return logs.printed;
+	};
+
+	$scope.getLogsConfiguration = function() {
+		return logs.configuration;
+	};
+
 	function getStatus(configuration) {
-		$http.get('/configs/' + configuration.name + '/status').then(function (success) {
+		$http.get('/configs/' + configuration.name + '/status').then(function(success) {
 
 			var successStatus = success.data.status;
 
-			switch (successStatus) {
+			switch(successStatus) {
 				case status.available:
 					available(configuration);
 					break;
@@ -104,7 +129,7 @@ function Configurations($scope, $http) {
 					break;
 			}
 
-		}, function (error) {
+		}, function(error) {
 			bugged(configuration);
 		});
 	}
@@ -117,14 +142,14 @@ function Configurations($scope, $http) {
 	}
 
 	function active(configuration) {
-		configuration.class = 'yellow';
+		configuration.class = 'orange';
 		configuration.icon = 'minus';
 		configuration.status = status.active;
 		updateScope($scope);
 	}
 
 	function bugged(configuration) {
-		configuration.class = 'orange';
+		configuration.class = 'red';
 		configuration.icon = 'warning';
 		configuration.status = status.bugged;
 		updateScope($scope);
@@ -133,6 +158,11 @@ function Configurations($scope, $http) {
 	function pending(configuration) {
 		configuration.class = 'basic loading';
 		configuration.icon = '';
+		updateScope($scope);
+	}
+
+	function closeLogs() {
+		logs.printed = false;
 		updateScope($scope);
 	}
 
