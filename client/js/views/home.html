@@ -1,3 +1,11 @@
+<div class="ui icon {{ getLogstashColor() }} message logstash-loaded" ng-hide="isLogstashLoaded()">
+	<i class="{{ getLogstashIcon() }} icon"></i>
+	<div class="content">
+		<div class="header">{{ getLogstashHeader() }}</div>
+		<p>{{ getLogstashMessage() }}</p>
+	</div>
+</div>
+
 <div class="ui three column divided stackable grid">
 	<div class="row">
 		<!-- Available -->

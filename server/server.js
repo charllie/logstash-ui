@@ -1,7 +1,6 @@
 // External Librairies
 var express = require('express');
 var multer = require('multer');
-var http = require('http');
 var Docker = require('dockerode');
 
 // Local librairies
@@ -15,8 +14,26 @@ var app = express();
 var upload = multer({ dest: '/data' });
 var docker = new Docker(config.docker);
 var folders = config.folders;
+var logstash = {
+	status: 'error'
+};
 
 app.use(express.static('../client/'));
+
+docker.pull('charllie/logstash:latest', function(err, stream) {
+	docker.modem.followProgress(stream, onFinished, onProgress);
+
+	if (err)
+		logstash.status = 'error';
+
+	function onFinished() {
+		logstash.status = 'done';
+	}
+
+	function onProgress() {
+		logstash.status = 'in progress';
+	}
+});
 
 // Docker manipulations
 function disable(config, success, error) {
@@ -26,7 +43,7 @@ function disable(config, success, error) {
 	if (container) {
 		container.remove({
 			force: true
-		}, function (err, data) {
+		}, function (err) {
 			if (err) {
 				if (error)
 					error();
@@ -37,6 +54,13 @@ function disable(config, success, error) {
 		});
 	}
 }
+
+app.get('/status', function(req, res) {
+	if (logstash.status === 'err')
+		res.status(400).end();
+	else
+		res.json(logstash);
+});
 
 app.get('/configs', function(req, res) {
 

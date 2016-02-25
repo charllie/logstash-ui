@@ -4,7 +4,6 @@ This web interface allows you to handle your Logstash instances.
 
 > **Note:**
   * Docker Remote API has to be enabled.
-  * For now, you have to pull Logstash image before using the project.
 
 ## How to get it?
 #### From Dockerfile

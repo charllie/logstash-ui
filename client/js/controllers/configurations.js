@@ -11,6 +11,14 @@ function Configurations($scope, $http) {
 		printed: false,
 		configuration: null
 	};
+	var logstash = {
+		interval: null,
+		loaded: false,
+		header: 'Just one second',
+		color: 'info',
+		icon: 'notched circle loading',
+		message: 'Pulling Logstash image...'
+	};
 
 	function loadList() {
 
@@ -39,7 +47,47 @@ function Configurations($scope, $http) {
 		});
 	}
 
+	function getImageStatus() {
+		$http.get('/status').then(function(success) {
+			var status = success.data.status;
+
+			switch(status) {
+				case 'done':
+				if (logstash.interval) {
+					clearInterval(logstash.interval);
+					setTimeout(function() {
+						logstash.loaded = true;
+						updateScope($scope);
+					}, 3000);
+				} else {
+					logstash.loaded = true;
+					updateScope($scope);
+				}
+
+				logstash.header = 'Done';
+				logstash.color = 'success';
+				logstash.message = 'You can now load your Logstash configurations';
+				logstash.icon = 'checkmark';
+				updateScope($scope);
+				break;
+
+				default:
+				if (!logstash.interval) {
+					logstash.interval = setInterval(getImageStatus, 2000);
+				}
+				break;
+			}
+		}, function(error) {
+			logstash.message = 'Please check your internet connection';
+			logstash.header = 'Cannot pull Logstash image';
+			logstash.color = 'error';
+			logstash.icon = 'remove';
+			updateScope($scope);
+		});
+	}
+
 	loadList();
+	getImageStatus();
 
 	$scope.getList = function() {
 		return list;
@@ -58,6 +106,22 @@ function Configurations($scope, $http) {
 				bugged(configuration);
 			});
 		}
+	};
+
+	$scope.getLogstashHeader = function() {
+		return logstash.header;
+	};
+
+	$scope.getLogstashColor = function() {
+		return logstash.color;
+	};
+
+	$scope.getLogstashIcon = function() {
+		return logstash.icon;
+	};
+
+	$scope.getLogstashMessage = function() {
+		return logstash.message;
 	};
 
 	$scope.disable = function(configuration) {
@@ -108,6 +172,14 @@ function Configurations($scope, $http) {
 
 	$scope.getLogsConfiguration = function() {
 		return logs.configuration;
+	};
+
+	$scope.isLogstashLoaded = function() {
+		return logstash.loaded;
+	};
+
+	$scope.getLogstashMessage = function() {
+		return logstash.message;
 	};
 
 	function getStatus(configuration) {

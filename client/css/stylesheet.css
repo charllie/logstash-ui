@@ -6,6 +6,10 @@ body {
 	padding-top: 7em;
 }
 
+.logstash-loaded {
+	margin-bottom: 3em !important;
+}
+
 .ui.menu.fixed {
 	z-index: 1001 !important;
 }

@@ -67,7 +67,7 @@ function Files($scope, $http, $route) {
 			params: {
 				subfolders: folder
 			}
-		}, function(response) {
+		}, function() {
 			subfolders.push(f);
 		});
 	};
@@ -82,7 +82,7 @@ function Files($scope, $http, $route) {
 				params: {
 					subfolders: folder
 				}
-			}, function(response) {
+			}, function() {
 				subfolders.pop();
 			});
 		}
@@ -94,8 +94,8 @@ function Files($scope, $http, $route) {
 
 	function updateListing(response) {
 		var items = response.data;
-		files = items['files'];
-		folders = items['folders'];
+		files = items.files;
+		folders = items.folders;
 		updateScope($scope);
 	}
 
